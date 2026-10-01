@@ -1,0 +1,23 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "Bybit Crypto Options Greeks, Candlesticks & Volume Output",
+    "description": "Comprehensive report of Bybit crypto assets including spot prices, Bybit Klines OHLCV candlesticks, strike-by-strike primary and higher-order Greeks tables, and Open Interest & Volume distributions.",
+    "type": "object",
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "timestamp": {
+            "type": "string"
+        },
+        "currenciesAnalyzed": {
+            "type": "integer"
+        },
+        "totalOptionStrikes": {
+            "type": "integer"
+        },
+        "results": {
+            "type": "array"
+        }
+    }
+}
