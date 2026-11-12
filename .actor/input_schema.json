@@ -54,6 +54,16 @@
             "type": "boolean",
             "description": "Whether to output the full primary and higher-order Greeks dataset.",
             "default": true
+        },
+        "proxyConfiguration": {
+            "title": "Proxy Configuration",
+            "type": "object",
+            "description": "Bybit blocks US datacenter IPs (AWS us-east-1) via CloudFront 403. Use a non-US Apify Proxy country (e.g. DE, FR, NL, GB, SG) or Residential proxies.",
+            "editor": "proxy",
+            "default": {
+                "useApifyProxy": true,
+                "apifyProxyCountry": "DE"
+            }
         }
     },
     "required": ["currencies"]
