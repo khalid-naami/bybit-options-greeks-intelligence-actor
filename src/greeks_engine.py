@@ -47,7 +47,9 @@ class BybitGreeksEngine:
     def process_currency_options(
         self,
         currency: str,
-        max_expirations: int = 4
+        max_expirations: int = 4,
+        include_oi_volume: bool = True,
+        include_full_greeks: bool = True,
     ) -> Dict[str, Any]:
         """Process complete live options chains across active expirations for a Bybit crypto asset."""
         clean_curr = currency.upper().replace('-USD', '').replace('-USDT', '').replace('^', '').strip()
@@ -56,19 +58,20 @@ class BybitGreeksEngine:
 
         spot_price = self.client.get_spot_price(clean_curr)
         raw_options = self.client.get_options_data(clean_curr)
+        dec_spot = 2 if spot_price > 10 else 4
 
         if not raw_options:
             logger.warning(f"No active Bybit options contracts found for {clean_curr}")
             return {
                 "currency": clean_curr,
-                "underlyingPriceUsd": spot_price,
+                "underlyingPriceUsd": round(spot_price, dec_spot),
                 "expirationsCount": 0,
                 "chains": []
             }
 
-        # Group options by Expiration Date
+        # Group options by Expiration Date (UTC)
         expirations_map: Dict[str, List[Dict[str, Any]]] = {}
-        today = date.today()
+        today = datetime.now(timezone.utc).date()
 
         for opt in raw_options:
             sym = opt.get('symbol', '')
@@ -154,11 +157,16 @@ class BybitGreeksEngine:
 
                 # Higher-Order Greeks computation
                 forward = spot_price * math.exp(r * T)
+                vanna, charm_call, speed, vomma, color = 0.0, 0.0, 0.0, 0.0, 0.0
                 try:
                     if sigma > 0 and strike > 0 and forward > 0:
                         d1 = (math.log(forward / strike) + (0.5 * sigma ** 2) * T) / (sigma * sqrt_T)
                         d2 = d1 - sigma * sqrt_T
                         pdf_d1 = norm.pdf(d1)
+                        if c_delta == 0.0:
+                            c_delta = float(norm.cdf(d1))
+                        if p_delta == 0.0:
+                            p_delta = float(-norm.cdf(-d1))
                         if gamma_val == 0.0:
                             gamma_val = float((discount * pdf_d1) / (forward * sigma * sqrt_T))
                         if vega_val == 0.0:
@@ -173,19 +181,12 @@ class BybitGreeksEngine:
                         speed = float(-(gamma_val / forward) * ((d1 / (sigma * sqrt_T)) + 1.0))
                         vomma = float((vega_val * d1 * d2) / sigma)
                         color = float(-gamma_val * ((r / (sigma * sqrt_T)) + ((1.0 - d1 * d2) / (2.0 * T))))
-                    else:
-                        vanna, charm_call, speed, vomma, color = 0.0, 0.0, 0.0, 0.0, 0.0
                 except Exception:
                     vanna, charm_call, speed, vomma, color = 0.0, 0.0, 0.0, 0.0, 0.0
 
-                if c_delta == 0.0 and strike > 0 and sigma > 0:
-                    c_delta = float(norm.cdf(d1))
-                if p_delta == 0.0 and strike > 0 and sigma > 0:
-                    p_delta = float(-norm.cdf(-d1))
+                dec = dec_spot
 
-                dec = 2 if spot_price > 10 else 4
-
-                record = {
+                record: Dict[str, Any] = {
                     "currency": clean_curr,
                     "underlyingPriceUsd": round(spot_price, dec),
                     "expirationDate": exp_str,
@@ -201,20 +202,26 @@ class BybitGreeksEngine:
                     "vega": round(vega_val, 4),
                     "callTheta": round(theta_c_val, 4),
                     "putTheta": round(theta_p_val, 4),
-                    "vanna": round(vanna, 6),
-                    "charmCall": round(charm_call, 6),
-                    "speed": round(speed, 8),
-                    "vomma": round(vomma, 6),
-                    "color": round(color, 8),
-                    "callOpenInterest": round(c_oi, 2),
-                    "putOpenInterest": round(p_oi, 2),
-                    "netOpenInterest": round(c_oi - p_oi, 2),
-                    "callVolume24h": round(c_vol, 2),
-                    "putVolume24h": round(p_vol, 2),
-                    "netVolume24h": round(c_vol - p_vol, 2),
                     "callBreakevenUsd": round(strike + c_mark, dec),
-                    "putBreakevenUsd": round(max(strike - p_mark, 0.0), dec)
+                    "putBreakevenUsd": round(max(strike - p_mark, 0.0), dec),
                 }
+                if include_full_greeks:
+                    record.update({
+                        "vanna": round(vanna, 6),
+                        "charmCall": round(charm_call, 6),
+                        "speed": round(speed, 8),
+                        "vomma": round(vomma, 6),
+                        "color": round(color, 8),
+                    })
+                if include_oi_volume:
+                    record.update({
+                        "callOpenInterest": round(c_oi, 2),
+                        "putOpenInterest": round(p_oi, 2),
+                        "netOpenInterest": round(c_oi - p_oi, 2),
+                        "callVolume24h": round(c_vol, 2),
+                        "putVolume24h": round(p_vol, 2),
+                        "netVolume24h": round(c_vol - p_vol, 2),
+                    })
                 chain_strike_records.append(record)
                 all_strike_records.append(record)
 
@@ -239,7 +246,7 @@ class BybitGreeksEngine:
 
         return {
             "currency": clean_curr,
-            "underlyingPriceUsd": round(spot_price, 2),
+            "underlyingPriceUsd": round(spot_price, dec_spot),
             "expirationsCount": len(chains_results),
             "chains": chains_results,
             "allRecords": all_strike_records
