@@ -1,8 +1,124 @@
 {
     "actorSpecification": 1,
-    "name": "bybit-options-greeks-dataset",
-    "title": "Bybit Options Strike-by-Strike Greeks & OI/Volume Dataset",
-    "description": "Tabular records of Bybit crypto options chains including strike prices, primary & higher-order Greeks, Open Interest, 24h Volume, and breakeven levels.",
+    "fields": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+            "currency": {
+                "type": "string",
+                "title": "Currency"
+            },
+            "underlyingPriceUsd": {
+                "type": "number",
+                "title": "Spot Price ($)"
+            },
+            "expirationDate": {
+                "type": "string",
+                "title": "Expiry"
+            },
+            "daysToExpiration": {
+                "type": "number",
+                "title": "DTE"
+            },
+            "strike": {
+                "type": "number",
+                "title": "Strike ($)"
+            },
+            "callMarkPriceUsd": {
+                "type": "number",
+                "title": "Call Mark ($)"
+            },
+            "putMarkPriceUsd": {
+                "type": "number",
+                "title": "Put Mark ($)"
+            },
+            "callMarkIvPct": {
+                "type": "number",
+                "title": "Call IV (%)"
+            },
+            "putMarkIvPct": {
+                "type": "number",
+                "title": "Put IV (%)"
+            },
+            "callDelta": {
+                "type": "number",
+                "title": "Call Delta"
+            },
+            "putDelta": {
+                "type": "number",
+                "title": "Put Delta"
+            },
+            "gamma": {
+                "type": "number",
+                "title": "Gamma"
+            },
+            "vega": {
+                "type": "number",
+                "title": "Vega"
+            },
+            "callTheta": {
+                "type": "number",
+                "title": "Call Theta"
+            },
+            "putTheta": {
+                "type": "number",
+                "title": "Put Theta"
+            },
+            "vanna": {
+                "type": "number",
+                "title": "Vanna"
+            },
+            "charmCall": {
+                "type": "number",
+                "title": "Charm"
+            },
+            "speed": {
+                "type": "number",
+                "title": "Speed"
+            },
+            "vomma": {
+                "type": "number",
+                "title": "Vomma"
+            },
+            "color": {
+                "type": "number",
+                "title": "Color"
+            },
+            "callOpenInterest": {
+                "type": "number",
+                "title": "Call OI"
+            },
+            "putOpenInterest": {
+                "type": "number",
+                "title": "Put OI"
+            },
+            "netOpenInterest": {
+                "type": "number",
+                "title": "Net OI"
+            },
+            "callVolume24h": {
+                "type": "number",
+                "title": "Call Vol"
+            },
+            "putVolume24h": {
+                "type": "number",
+                "title": "Put Vol"
+            },
+            "netVolume24h": {
+                "type": "number",
+                "title": "Net Vol"
+            },
+            "callBreakevenUsd": {
+                "type": "number",
+                "title": "Call BE ($)"
+            },
+            "putBreakevenUsd": {
+                "type": "number",
+                "title": "Put BE ($)"
+            }
+        }
+    },
     "views": {
         "overview": {
             "title": "Bybit Options Greeks & Volume Overview",
