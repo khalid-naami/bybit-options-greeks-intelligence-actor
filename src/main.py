@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import math
 import sys
 from datetime import datetime, timezone
 from typing import Dict, Any, List
@@ -133,8 +134,12 @@ async def main() -> None:
 
         # Push to Apify Default Dataset
         if dataset_records:
-            logger.info(f"Pushing {len(dataset_records)} strike options records to Apify dataset...")
-            await Actor.push_data(dataset_records)
+            sanitized_records = [
+                {k: v for k, v in rec.items() if v is not None and not (isinstance(v, float) and not math.isfinite(v))}
+                for rec in dataset_records
+            ]
+            logger.info(f"Pushing {len(sanitized_records)} strike options records to Apify dataset...")
+            await Actor.push_data(sanitized_records)
 
         # Save comprehensive summary to Key-Value Store (OUTPUT)
         output_payload = {
@@ -153,13 +158,16 @@ async def main() -> None:
         }
         await Actor.set_value("OUTPUT", output_payload)
 
-        if not dataset_records and client.successful_requests == 0:
-            err_msg = (
-                f"All Bybit V5 requests failed (403 blocks: {client.blocked_403_count}). "
-                f"Last error: {client.last_error or 'No response from Bybit API'}. "
-                "Apify cloud runs in US-East AWS which Bybit CloudFront blocks by default; "
-                "ensure a non-US proxy country (e.g. DE, FR, SG) or Residential Proxy is enabled."
-            )
+        if not dataset_records:
+            if client.successful_requests == 0:
+                err_msg = (
+                    f"All Bybit V5 requests failed (403 blocks: {client.blocked_403_count}). "
+                    f"Last error: {client.last_error or 'No response from Bybit API'}. "
+                    "Apify cloud runs in US-East AWS which Bybit CloudFront blocks by default; "
+                    "ensure a non-US proxy country (e.g. DE, FR, SG) or Residential Proxy is enabled."
+                )
+            else:
+                err_msg = "No Bybit option strike records were extracted."
             logger.error(err_msg)
             await Actor.fail(status_message=err_msg)
             return
