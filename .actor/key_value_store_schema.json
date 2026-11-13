@@ -1,0 +1,15 @@
+{
+    "actorKeyValueStoreSchemaVersion": 1,
+    "title": "Bybit Options Greeks Key-Value Store",
+    "description": "Summary report for Bybit Crypto Options Greeks, Candlesticks & OI/Volume Tables.",
+    "collections": {
+        "output": {
+            "title": "Bybit Options Summary",
+            "description": "Comprehensive report of spot prices, Bybit Klines OHLCV candlesticks, and strike-level Greeks/OI chains.",
+            "key": "OUTPUT",
+            "contentTypes": [
+                "application/json"
+            ]
+        }
+    }
+}
