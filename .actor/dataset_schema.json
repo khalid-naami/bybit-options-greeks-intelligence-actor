@@ -117,7 +117,8 @@
                 "type": "number",
                 "title": "Put BE ($)"
             }
-        }
+        },
+        "required": []
     },
     "views": {
         "overview": {
